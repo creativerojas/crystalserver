@@ -47,7 +47,9 @@ bool AccountRepositoryDB::loadBySession(const std::string &sessionKey, AccountIn
 		"SELECT `accounts`.`id`, `type`, `premdays`, `lastday`, `creation`, `premdays_purchased`, `account_sessions`.`expires` "
 		"FROM `accounts` "
 		"INNER JOIN `account_sessions` ON `account_sessions`.`account_id` = `accounts`.`id` "
-		"WHERE `account_sessions`.`id` = {}",
+		// opentibiabr/login-server stores SHA-256 session ids; keep SHA-1 for older login services.
+		"WHERE `account_sessions`.`id` IN (SHA2({}, 256), {}) LIMIT 1",
+		g_database().escapeString(sessionKey),
 		g_database().escapeString(transformToSHA1(sessionKey))
 	);
 	return load(query, acc);
